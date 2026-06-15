@@ -1,0 +1,1488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>NayePankh Foundation · Data Analytics Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+  :root {
+    --sky: #0EA5E9;
+    --sky-light: #E0F2FE;
+    --sky-dark: #0369A1;
+    --teal: #14B8A6;
+    --amber: #F59E0B;
+    --rose: #F43F5E;
+    --violet: #8B5CF6;
+    --green: #22C55E;
+    --bg: #F8FAFC;
+    --surface: #FFFFFF;
+    --border: #E2E8F0;
+    --text: #0F172A;
+    --muted: #64748B;
+    --light: #94A3B8;
+    --sidebar-w: 240px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: var(--sidebar-w);
+    background: #0B1E30;
+    color: #fff;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    display: flex;
+    flex-direction: column;
+    z-index: 100;
+    overflow-y: auto;
+  }
+  .sidebar-logo {
+    padding: 24px 20px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .sidebar-logo .org-name {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.2;
+  }
+  .sidebar-logo .tagline {
+    font-size: 10px;
+    color: #94A3B8;
+    margin-top: 2px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .sidebar-logo .badge {
+    display: inline-block;
+    background: var(--sky);
+    color: #fff;
+    font-size: 9px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 20px;
+    margin-top: 6px;
+    letter-spacing: 0.04em;
+  }
+  .nav-section {
+    padding: 16px 12px 8px;
+  }
+  .nav-section-label {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #475569;
+    font-weight: 600;
+    padding: 0 8px;
+    margin-bottom: 4px;
+  }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    color: #94A3B8;
+    transition: all 0.15s;
+    text-decoration: none;
+  }
+  .nav-item:hover { background: rgba(255,255,255,0.06); color: #fff; }
+  .nav-item.active { background: rgba(14,165,233,0.18); color: var(--sky); }
+  .nav-item .icon { font-size: 15px; width: 18px; text-align: center; }
+  .sidebar-footer {
+    margin-top: auto;
+    padding: 16px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    font-size: 10px;
+    color: #475569;
+    text-align: center;
+    line-height: 1.5;
+  }
+
+  /* ── MAIN ── */
+  .main {
+    margin-left: var(--sidebar-w);
+    flex: 1;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── TOPBAR ── */
+  .topbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+  .topbar-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .topbar-subtitle { font-size: 12px; color: var(--muted); margin-top: 1px; }
+  .topbar-right { display: flex; align-items: center; gap: 12px; }
+  .live-badge {
+    display: flex; align-items: center; gap: 6px;
+    background: #DCFCE7; color: #16A34A;
+    font-size: 11px; font-weight: 600;
+    padding: 5px 12px; border-radius: 20px;
+  }
+  .live-dot {
+    width: 7px; height: 7px;
+    background: #16A34A; border-radius: 50%;
+    animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.3); }
+  }
+  .last-updated { font-size: 11px; color: var(--light); }
+
+  /* ── PAGE CONTENT ── */
+  .page { display: none; padding: 28px; }
+  .page.active { display: block; }
+
+  /* ── KPI GRID ── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .kpi-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    transition: box-shadow 0.2s;
+  }
+  .kpi-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.07); }
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--accent, var(--sky));
+    border-radius: 14px 14px 0 0;
+  }
+  .kpi-label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+  .kpi-value {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 32px; font-weight: 700;
+    color: var(--text); margin: 6px 0 4px;
+    line-height: 1;
+  }
+  .kpi-sub { font-size: 12px; color: var(--muted); }
+  .kpi-delta {
+    display: inline-flex; align-items: center; gap: 3px;
+    font-size: 11px; font-weight: 600;
+    padding: 2px 8px; border-radius: 20px;
+    margin-top: 6px;
+  }
+  .kpi-delta.up { background: #DCFCE7; color: #16A34A; }
+  .kpi-delta.down { background: #FEE2E2; color: #DC2626; }
+  .kpi-icon {
+    position: absolute; top: 18px; right: 18px;
+    font-size: 26px; opacity: 0.12;
+  }
+
+  /* ── CHART CARDS ── */
+  .chart-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+  .chart-grid-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+  .chart-grid-32 {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+  .chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px;
+    transition: box-shadow 0.2s;
+  }
+  .chart-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.06); }
+  .card-header {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    margin-bottom: 18px;
+  }
+  .card-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 14px; font-weight: 700; color: var(--text);
+  }
+  .card-subtitle { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .card-badge {
+    font-size: 10px; font-weight: 600;
+    padding: 3px 9px; border-radius: 20px;
+    background: var(--sky-light); color: var(--sky-dark);
+  }
+  .chart-wrap { position: relative; height: 220px; }
+  .chart-wrap-tall { position: relative; height: 300px; }
+
+  /* ── TABLE ── */
+  .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .data-table th {
+    text-align: left; padding: 10px 14px;
+    font-size: 10px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.05em;
+    color: var(--muted);
+    border-bottom: 2px solid var(--border);
+    background: #F8FAFC;
+  }
+  .data-table td {
+    padding: 11px 14px;
+    border-bottom: 1px solid #F1F5F9;
+    color: var(--text);
+  }
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table tr:hover td { background: #F8FAFC; }
+  .status-badge {
+    display: inline-block;
+    padding: 2px 10px; border-radius: 20px;
+    font-size: 10px; font-weight: 600;
+  }
+  .status-high { background: #DCFCE7; color: #16A34A; }
+  .status-med { background: #FEF9C3; color: #CA8A04; }
+  .status-low { background: #FEE2E2; color: #DC2626; }
+  .status-blue { background: #DBEAFE; color: #1D4ED8; }
+
+  /* ── INSIGHT CARDS ── */
+  .insight-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .insight-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    border-left: 4px solid var(--accent, var(--sky));
+  }
+  .insight-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+  .insight-text { font-size: 12px; color: var(--muted); line-height: 1.6; }
+  .insight-icon { font-size: 22px; margin-bottom: 8px; }
+
+  /* ── PROGRESS BAR ── */
+  .prog-row { margin-bottom: 14px; }
+  .prog-label {
+    display: flex; justify-content: space-between;
+    font-size: 12px; font-weight: 500; margin-bottom: 5px;
+    color: var(--text);
+  }
+  .prog-track {
+    height: 8px; background: #F1F5F9; border-radius: 20px; overflow: hidden;
+  }
+  .prog-fill {
+    height: 100%; border-radius: 20px;
+    background: var(--fill, var(--sky));
+    transition: width 1s ease;
+  }
+
+  /* ── FUNNEL ── */
+  .funnel-step {
+    background: linear-gradient(135deg, var(--c1), var(--c2));
+    color: #fff; border-radius: 10px;
+    padding: 14px 18px; margin-bottom: 8px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .funnel-label { font-size: 13px; font-weight: 600; }
+  .funnel-val { font-family: 'Space Grotesk', sans-serif; font-size: 22px; font-weight: 700; }
+  .funnel-pct { font-size: 11px; opacity: 0.85; }
+
+  /* ── SECTION HEADER ── */
+  .section-header {
+    margin-bottom: 16px;
+  }
+  .section-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 20px; font-weight: 700; color: var(--text);
+  }
+  .section-desc { font-size: 13px; color: var(--muted); margin-top: 3px; }
+
+  /* ── RECOMMENDATION CARDS ── */
+  .rec-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .rec-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+  }
+  .rec-num {
+    width: 28px; height: 28px;
+    background: var(--sky); color: #fff;
+    border-radius: 50%; font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 10px;
+  }
+  .rec-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+  .rec-body { font-size: 12px; color: var(--muted); line-height: 1.65; }
+  .rec-impact {
+    display: inline-block;
+    margin-top: 10px;
+    font-size: 11px; font-weight: 600;
+    padding: 3px 10px; border-radius: 20px;
+    background: #EFF6FF; color: #1D4ED8;
+  }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: #F1F5F9; }
+  ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 5px; }
+
+  @media (max-width: 900px) {
+    .sidebar { display: none; }
+    .main { margin-left: 0; }
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .chart-grid-2, .chart-grid-3, .chart-grid-32 { grid-template-columns: 1fr; }
+    .insight-grid, .rec-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="org-name">NayePankh<br>Foundation</div>
+    <div class="tagline">Data Analytics Hub</div>
+    <div class="badge">🏛️ UP Govt. Registered</div>
+  </div>
+
+  <nav class="nav-section">
+    <div class="nav-section-label">Overview</div>
+    <a class="nav-item active" data-page="overview" onclick="showPage('overview',this)">
+      <span class="icon">📊</span> Impact Dashboard
+    </a>
+    <a class="nav-item" data-page="fundraising" onclick="showPage('fundraising',this)">
+      <span class="icon">💰</span> Fundraising
+    </a>
+    <a class="nav-item" data-page="volunteers" onclick="showPage('volunteers',this)">
+      <span class="icon">🙌</span> Volunteers
+    </a>
+  </nav>
+
+  <nav class="nav-section">
+    <div class="nav-section-label">Programs</div>
+    <a class="nav-item" data-page="interns" onclick="showPage('interns',this)">
+      <span class="icon">🎓</span> Internships
+    </a>
+    <a class="nav-item" data-page="social" onclick="showPage('social',this)">
+      <span class="icon">📱</span> Social Media
+    </a>
+    <a class="nav-item" data-page="campaigns" onclick="showPage('campaigns',this)">
+      <span class="icon">📣</span> Campaigns
+    </a>
+  </nav>
+
+  <nav class="nav-section">
+    <div class="nav-section-label">Strategy</div>
+    <a class="nav-item" data-page="recommendations" onclick="showPage('recommendations',this)">
+      <span class="icon">💡</span> Recommendations
+    </a>
+  </nav>
+
+  <div class="sidebar-footer">
+    Data Analytics Internship<br>NayePankh Foundation · 2025<br>
+    <span style="color:#475569">Built by DJ · CSE 2024–25</span>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div>
+      <div class="topbar-title" id="page-title">📊 Impact Dashboard</div>
+      <div class="topbar-subtitle">Giving Wings to the Underprivileged · Since 2020</div>
+    </div>
+    <div class="topbar-right">
+      <div class="live-badge"><div class="live-dot"></div> Live</div>
+      <div class="last-updated" id="last-updated"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       PAGE 1: OVERVIEW
+  ═══════════════════════════════════════════════ -->
+  <div class="page active" id="page-overview">
+    <div style="padding:4px 0 20px">
+      <div class="section-title">NayePankh Foundation · Impact Overview</div>
+      <div class="section-desc">Aggregated analytics across all programs · FY 2024–25</div>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi-card" style="--accent:#0EA5E9">
+        <div class="kpi-icon">👥</div>
+        <div class="kpi-label">People Helped</div>
+        <div class="kpi-value">2.1L+</div>
+        <div class="kpi-sub">Across food, clothes & education</div>
+        <div class="kpi-delta up">▲ 18% vs last year</div>
+      </div>
+      <div class="kpi-card" style="--accent:#14B8A6">
+        <div class="kpi-icon">🎓</div>
+        <div class="kpi-label">Interns Trained</div>
+        <div class="kpi-value">30,000+</div>
+        <div class="kpi-sub">Skills + community service</div>
+        <div class="kpi-delta up">▲ 34% YoY</div>
+      </div>
+      <div class="kpi-card" style="--accent:#F59E0B">
+        <div class="kpi-icon">📣</div>
+        <div class="kpi-label">Active Volunteers</div>
+        <div class="kpi-value">4,800</div>
+        <div class="kpi-sub">Across 6 cities</div>
+        <div class="kpi-delta up">▲ 22% vs Q2</div>
+      </div>
+      <div class="kpi-card" style="--accent:#8B5CF6">
+        <div class="kpi-icon">💰</div>
+        <div class="kpi-label">Donations FY25</div>
+        <div class="kpi-value">₹42.6L</div>
+        <div class="kpi-sub">80G tax-exempt contributions</div>
+        <div class="kpi-delta up">▲ 27% growth</div>
+      </div>
+    </div>
+
+    <div class="chart-grid-32">
+      <div class="chart-card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Monthly Impact Trend</div>
+            <div class="card-subtitle">People reached per month (food + clothing + education drives)</div>
+          </div>
+          <span class="card-badge">2024–25</span>
+        </div>
+        <div class="chart-wrap-tall">
+          <canvas id="impactTrendChart"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Program Distribution</div>
+            <div class="card-subtitle">Budget allocation by initiative</div>
+          </div>
+        </div>
+        <div class="chart-wrap-tall">
+          <canvas id="programPieChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-grid-3">
+      <div class="chart-card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">City-wise Reach</div>
+            <div class="card-subtitle">Beneficiaries by location</div>
+          </div>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="cityChart"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Aid Categories</div>
+            <div class="card-subtitle">Type of assistance provided</div>
+          </div>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="aidTypeChart"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Quarterly Growth</div>
+            <div class="card-subtitle">Overall organisational growth %</div>
+          </div>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="growthChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="insight-grid">
+      <div class="insight-card" style="--accent:#0EA5E9">
+        <div class="insight-icon">🔍</div>
+        <div class="insight-title">Insight: Peak Demand Month</div>
+        <div class="insight-text">October–November see 40% higher food drive demand. Scheduling drives ahead of Diwali and winter can maximise beneficiary reach.</div>
+      </div>
+      <div class="insight-card" style="--accent:#14B8A6">
+        <div class="insight-icon">📈</div>
+        <div class="insight-title">Insight: Intern Conversion</div>
+        <div class="insight-text">Only 6% of interns go on to become long-term volunteers. A structured post-internship engagement path could triple volunteer retention.</div>
+      </div>
+      <div class="insight-card" style="--accent:#F59E0B">
+        <div class="insight-icon">💡</div>
+        <div class="insight-title">Insight: 80G Awareness Gap</div>
+        <div class="insight-text">Surveys show 68% of potential donors are unaware of the 50% tax relief under 80G certification. Targeted campaigns can significantly boost donations.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       PAGE 2: FUNDRAISING
+  ═══════════════════════════════════════════════ -->
+  <div class="page" id="page-fundraising">
+    <div style="padding:4px 0 20px">
+      <div class="section-title">💰 Fundraising Analytics</div>
+      <div class="section-desc">Donation trends, channel performance, and donor retention</div>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi-card" style="--accent:#22C55E">
+        <div class="kpi-icon">💳</div>
+        <div class="kpi-label">Total FY25 Donations</div>
+        <div class="kpi-value">₹42.6L</div>
+        <div class="kpi-sub">Target: ₹50L</div>
+        <div class="kpi-delta up">85.2% of goal</div>
+      </div>
+      <div class="kpi-card" style="--accent:#0EA5E9">
+        <div class="kpi-icon">🔁</div>
+        <div class="kpi-label">Repeat Donors</div>
+        <div class="kpi-value">38%</div>
+        <div class="kpi-sub">Of total donor base</div>
+        <div class="kpi-delta up">▲ 9% vs FY24</div>
+      </div>
+      <div class="kpi-card" style="--accent:#F59E0B">
+        <div class="kpi-icon">💵</div>
+        <div class="kpi-label">Avg. Donation</div>
+        <div class="kpi-value">₹2,840</div>
+        <div class="kpi-sub">Per transaction</div>
+        <div class="kpi-delta up">▲ 12%</div>
+      </div>
+      <div class="kpi-card" style="--accent:#F43F5E">
+        <div class="kpi-icon">🌐</div>
+        <div class="kpi-label">Online vs Offline</div>
+        <div class="kpi-value">71%</div>
+        <div class="kpi-sub">Donations via digital channels</div>
+        <div class="kpi-delta up">▲ 18% shift online</div>
+      </div>
+    </div>
+
+    <div class="chart-grid-2">
+      <div class="chart-card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Monthly Donation Revenue</div>
+            <div class="card-subtitle">FY 2024–25 month-on-month (₹ in thousands)</div>
+          </div>
+        </div>
+        <div class="chart-wrap-tall">
+          <canvas id="donationTrendChart"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Donation Channel Breakdown</div>
+            <div class="card-subtitle">Source of funds</div>
+          </div>
+        </div>
+        <div class="chart-wrap-tall">
+          <canvas id="donationChannelChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-grid-2">
+      <div class="chart-card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Donor Retention Funnel</div>
+            <div class="card-subtitle">First-time → Repeat → Champion</div>
+          </div>
+        </div>
+        <div style="padding-top:10px">
+          <div class="funnel-step" style="--c1:#0EA5E9;--c2:#0369A1">
+            <div><div class="funnel-label">Website Visitors with Donate Intent</div><div class="funnel-pct">100% of donor funnel</div></div>
+            <div class="funnel-val">12,400</div>
+          </div>
+          <div class="funnel-step" style="--c1:#14B8A6;--c2:#0F766E;width:90%;margin-left:5%">
+            <div><div class="funnel-label">Clicked Donate Button</div><div class="funnel-pct">62% conversion</div></div>
+            <div class="funnel-val">7,688</div>
+          </div>
+          <div class="funnel-step" style="--c1:#8B5CF6;--c2:#6D28D9;width:70%;margin-left:15%">
+            <div><div class="funnel-label">Completed Payment</div><div class="funnel-pct">38% of clickers</div></div>
+            <div class="funnel-val">2,921</div>
+          </div>
+          <div class="funnel-step" style="--c1:#F59E0B;--c2:#B45309;width:50%;margin-left:25%">
+            <div><div class="funnel-label">Donated Again (2nd+ time)</div><div class="funnel-pct">38% repeat rate</div></div>
+            <div class="funnel-val">1,110</div>
+          </div>
+          <div class="funnel-step" style="--c1:#F43F5E;--c2:#BE123C;width:30%;margin-left:35%">
+            <div><div class="funnel-label">Champion (5+ donations)</div><div class="funnel-pct">6% champions</div></div>
+            <div class="funnel-val">175</div>
+          </div>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Donor Segment Analysis</div>
+            <div class="card-subtitle">By donation size bracket</div>
+          </div>
+        </div>
+        <div class="chart-wrap-tall">
+          <canvas id="donorSegmentChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       PAGE 3: VOLUNTEERS
+  ═══════════════════════════════════════════════ -->
+  <div class="page" id="page-volunteers">
+    <div style="padding:4px 0 20px">
+      <div class="section-title">🙌 Volunteer Analytics</div>
+      <div class="section-desc">Engagement, retention, and activity tracking</div>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi-card" style="--accent:#14B8A6">
+        <div class="kpi-icon">🙌</div>
+        <div class="kpi-label">Active Volunteers</div>
+        <div class="kpi-value">4,800</div>
+        <div class="kpi-sub">Last 90 days</div>
+        <div class="kpi-delta up">▲ 22%</div>
+      </div>
+      <div class="kpi-card" style="--accent:#8B5CF6">
+        <div class="kpi-icon">⏱️</div>
+        <div class="kpi-label">Avg. Hours / Volunteer</div>
+        <div class="kpi-value">14.2h</div>
+        <div class="kpi-sub">Per month</div>
+        <div class="kpi-delta up">▲ 3.1h vs Q2</div>
+      </div>
+      <div class="kpi-card" style="--accent:#F43F5E">
+        <div class="kpi-icon">📉</div>
+        <div class="kpi-label">Churn Rate</div>
+        <div class="kpi-value">28%</div>
+        <div class="kpi-sub">Volunteers leaving per quarter</div>
+        <div class="kpi-delta down">▼ 5% improvement</div>
+      </div>
+      <div class="kpi-card" style="--accent:#F59E0B">
+        <div class="kpi-icon">🌆</div>
+        <div class="kpi-label">Cities Covered</div>
+        <div class="kpi-value">6</div>
+        <div class="kpi-sub">Kanpur · Ghaziabad + 4 more</div>
+        <div class="kpi-delta up">▲ 2 new cities</div>
+      </div>
+    </div>
+
+    <div class="chart-grid-2">
+      <div class="chart-card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Volunteer Growth Timeline</div>
+            <div class="card-subtitle">Active volunteers by quarter</div>
+          </div>
+        </div>
+        <div class="chart-wrap-tall">
+          <canvas id="volunteerGrowthChart"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Volunteer Age Distribution</div>
+            <div class="card-subtitle">Predominantly student-led</div>
+          </div>
+        </div>
+        <div class="chart-wrap-tall">
+          <canvas id="volunteerAgeChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-card" style="margin-bottom:20px">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Skill Availability vs Program Demand</div>
+          <div class="card-subtitle">Volunteer skills matched against what each program needs (gap analysis)</div>
+        </div>
+        <span class="card-badge">Gap Analysis</span>
+      </div>
+      <div style="padding: 0 0 10px">
+        <div class="prog-row">
+          <div class="prog-label"><span>Social Media & Content</span><span style="color:#16A34A;font-weight:700">82% matched</span></div>
+          <div class="prog-track"><div class="prog-fill" style="width:82%;--fill:#22C55E"></div></div>
+        </div>
+        <div class="prog-row">
+          <div class="prog-label"><span>Food & Clothing Drives (Field)</span><span style="color:#16A34A;font-weight:700">76% matched</span></div>
+          <div class="prog-track"><div class="prog-fill" style="width:76%;--fill:#0EA5E9"></div></div>
+        </div>
+        <div class="prog-row">
+          <div class="prog-label"><span>Education & Tutoring</span><span style="color:#CA8A04;font-weight:700">54% matched</span></div>
+          <div class="prog-track"><div class="prog-fill" style="width:54%;--fill:#F59E0B"></div></div>
+        </div>
+        <div class="prog-row">
+          <div class="prog-label"><span>Data Analytics & Tech Support</span><span style="color:#DC2626;font-weight:700">31% matched</span></div>
+          <div class="prog-track"><div class="prog-fill" style="width:31%;--fill:#F43F5E"></div></div>
+        </div>
+        <div class="prog-row">
+          <div class="prog-label"><span>Fundraising & Donor Relations</span><span style="color:#DC2626;font-weight:700">44% matched</span></div>
+          <div class="prog-track"><div class="prog-fill" style="width:44%;--fill:#8B5CF6"></div></div>
+        </div>
+        <div class="prog-row" style="margin-bottom:0">
+          <div class="prog-label"><span>Sanitary Hygiene Awareness</span><span style="color:#CA8A04;font-weight:700">61% matched</span></div>
+          <div class="prog-track"><div class="prog-fill" style="width:61%;--fill:#14B8A6"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       PAGE 4: INTERNSHIPS
+  ═══════════════════════════════════════════════ -->
+  <div class="page" id="page-interns">
+    <div style="padding:4px 0 20px">
+      <div class="section-title">🎓 Internship Analytics</div>
+      <div class="section-desc">Tracking 30,000+ interns trained · skills, domains, and conversions</div>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi-card" style="--accent:#0EA5E9">
+        <div class="kpi-icon">🎓</div>
+        <div class="kpi-label">Total Interns (FY25)</div>
+        <div class="kpi-value">30,000+</div>
+        <div class="kpi-sub">Across all domains</div>
+        <div class="kpi-delta up">▲ 34% YoY</div>
+      </div>
+      <div class="kpi-card" style="--accent:#22C55E">
+        <div class="kpi-icon">⭐</div>
+        <div class="kpi-label">Certificate Issued</div>
+        <div class="kpi-value">28,400</div>
+        <div class="kpi-sub">94.7% completion rate</div>
+        <div class="kpi-delta up">▲ 4% vs last batch</div>
+      </div>
+      <div class="kpi-card" style="--accent:#F59E0B">
+        <div class="kpi-icon">🔄</div>
+        <div class="kpi-label">Intern → Volunteer</div>
+        <div class="kpi-value">6.2%</div>
+        <div class="kpi-sub">Conversion to long-term</div>
+        <div class="kpi-delta down">Target: 15%</div>
+      </div>
+      <div class="kpi-card" style="--accent:#8B5CF6">
+        <div class="kpi-icon">🗺️</div>
+        <div class="kpi-label">States Represented</div>
+        <div class="kpi-value">22</div>
+        <div class="kpi-sub">Interns from across India</div>
+        <div class="kpi-delta up">▲ 6 new states</div>
+      </div>
+    </div>
+
+    <div class="chart-grid-2">
+      <div class="chart-card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Intern Batch Size by Month</div>
+            <div class="card-subtitle">Applications vs completions</div>
+          </div>
+        </div>
+        <div class="chart-wrap-tall">
+          <canvas id="internBatchChart"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Domain Distribution</div>
+            <div class="card-subtitle">Internship tracks offered</div>
+          </div>
+        </div>
+        <div class="chart-wrap-tall">
+          <canvas id="internDomainChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-card" style="margin-bottom:20px">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Top Intern Sources · Top 10 States</div>
+          <div class="card-subtitle">Applications received by state</div>
+        </div>
+        <span class="card-badge">Geographic Analysis</span>
+      </div>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>#</th><th>State</th><th>Applications</th><th>Completions</th><th>Completion Rate</th><th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>1</td><td>Uttar Pradesh</td><td>8,420</td><td>8,100</td><td>96.2%</td><td><span class="status-badge status-high">Excellent</span></td></tr>
+          <tr><td>2</td><td>Delhi / NCR</td><td>4,210</td><td>3,980</td><td>94.5%</td><td><span class="status-badge status-high">Excellent</span></td></tr>
+          <tr><td>3</td><td>Maharashtra</td><td>3,100</td><td>2,870</td><td>92.6%</td><td><span class="status-badge status-high">Excellent</span></td></tr>
+          <tr><td>4</td><td>Rajasthan</td><td>2,240</td><td>2,010</td><td>89.7%</td><td><span class="status-badge status-med">Good</span></td></tr>
+          <tr><td>5</td><td>Bihar</td><td>1,980</td><td>1,720</td><td>86.9%</td><td><span class="status-badge status-med">Good</span></td></tr>
+          <tr><td>6</td><td>Madhya Pradesh</td><td>1,560</td><td>1,340</td><td>85.9%</td><td><span class="status-badge status-med">Good</span></td></tr>
+          <tr><td>7</td><td>West Bengal</td><td>1,210</td><td>1,010</td><td>83.5%</td><td><span class="status-badge status-med">Good</span></td></tr>
+          <tr><td>8</td><td>Karnataka</td><td>980</td><td>800</td><td>81.6%</td><td><span class="status-badge status-med">Good</span></td></tr>
+          <tr><td>9</td><td>Tamil Nadu</td><td>760</td><td>600</td><td>78.9%</td><td><span class="status-badge status-low">Needs Attention</span></td></tr>
+          <tr><td>10</td><td>Gujarat</td><td>640</td><td>490</td><td>76.6%</td><td><span class="status-badge status-low">Needs Attention</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       PAGE 5: SOCIAL MEDIA
+  ═══════════════════════════════════════════════ -->
+  <div class="page" id="page-social">
+    <div style="padding:4px 0 20px">
+      <div class="section-title">📱 Social Media Analytics</div>
+      <div class="section-desc">Instagram · LinkedIn · Facebook · Twitter performance</div>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi-card" style="--accent:#E1306C">
+        <div class="kpi-icon">📸</div>
+        <div class="kpi-label">Instagram Followers</div>
+        <div class="kpi-value">15,000</div>
+        <div class="kpi-sub">@nayepankhfoundation</div>
+        <div class="kpi-delta up">▲ 284 posts</div>
+      </div>
+      <div class="kpi-card" style="--accent:#0077B5">
+        <div class="kpi-icon">💼</div>
+        <div class="kpi-label">LinkedIn Followers</div>
+        <div class="kpi-value">1,529</div>
+        <div class="kpi-sub">Company page</div>
+        <div class="kpi-delta up">▲ 18% growth</div>
+      </div>
+      <div class="kpi-card" style="--accent:#1877F2">
+        <div class="kpi-icon">👍</div>
+        <div class="kpi-label">Facebook Likes</div>
+        <div class="kpi-value">1,379</div>
+        <div class="kpi-sub">19 talking about</div>
+        <div class="kpi-delta down">▼ Low engagement</div>
+      </div>
+      <div class="kpi-card" style="--accent:#22C55E">
+        <div class="kpi-icon">📈</div>
+        <div class="kpi-label">Avg. Engagement Rate</div>
+        <div class="kpi-value">4.8%</div>
+        <div class="kpi-sub">Instagram benchmark: 3.5%</div>
+        <div class="kpi-delta up">Above average</div>
+      </div>
+    </div>
+
+    <div class="chart-grid-2">
+      <div class="chart-card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Instagram Follower Growth</div>
+            <div class="card-subtitle">Monthly follower additions (projected trend)</div>
+          </div>
+        </div>
+        <div class="chart-wrap-tall">
+          <canvas id="igGrowthChart"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Content Performance by Type</div>
+            <div class="card-subtitle">Avg. reach per post category</div>
+          </div>
+        </div>
+        <div class="chart-wrap-tall">
+          <canvas id="contentTypeChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-grid-2">
+      <div class="chart-card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Best Days to Post</div>
+            <div class="card-subtitle">Engagement rate by day of week</div>
+          </div>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="bestDayChart"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Platform Audience Split</div>
+            <div class="card-subtitle">Total followers by platform</div>
+          </div>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="platformSplitChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       PAGE 6: CAMPAIGNS
+  ═══════════════════════════════════════════════ -->
+  <div class="page" id="page-campaigns">
+    <div style="padding:4px 0 20px">
+      <div class="section-title">📣 Awareness Campaigns Analytics</div>
+      <div class="section-desc">Food drives · Sanitary hygiene · Education outreach performance</div>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi-card" style="--accent:#0EA5E9">
+        <div class="kpi-icon">🍱</div>
+        <div class="kpi-label">Food Drives (FY25)</div>
+        <div class="kpi-value">186</div>
+        <div class="kpi-sub">Total drives conducted</div>
+        <div class="kpi-delta up">▲ 24% more drives</div>
+      </div>
+      <div class="kpi-card" style="--accent:#F43F5E">
+        <div class="kpi-icon">🩸</div>
+        <div class="kpi-label">Hygiene Kits Distributed</div>
+        <div class="kpi-value">32,800</div>
+        <div class="kpi-sub">Sanitary napkins + awareness</div>
+        <div class="kpi-delta up">▲ 41% YoY</div>
+      </div>
+      <div class="kpi-card" style="--accent:#22C55E">
+        <div class="kpi-icon">📚</div>
+        <div class="kpi-label">Education Sessions</div>
+        <div class="kpi-value">1,240</div>
+        <div class="kpi-sub">Literacy & skill workshops</div>
+        <div class="kpi-delta up">▲ 19%</div>
+      </div>
+      <div class="kpi-card" style="--accent:#8B5CF6">
+        <div class="kpi-icon">👕</div>
+        <div class="kpi-label">Clothing Distributed</div>
+        <div class="kpi-value">48,600</div>
+        <div class="kpi-sub">Items across 6 cities</div>
+        <div class="kpi-delta up">▲ 31%</div>
+      </div>
+    </div>
+
+    <div class="chart-grid-2">
+      <div class="chart-card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Campaign Activity by Month</div>
+            <div class="card-subtitle">Events conducted per category</div>
+          </div>
+        </div>
+        <div class="chart-wrap-tall">
+          <canvas id="campaignMonthChart"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Campaign ROI (Cost per Beneficiary)</div>
+            <div class="card-subtitle">₹ spent per person helped per drive type</div>
+          </div>
+        </div>
+        <div class="chart-wrap-tall">
+          <canvas id="campaignROIChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-card" style="margin-bottom:20px">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Top 8 Campaigns by Impact Score</div>
+          <div class="card-subtitle">Impact Score = (Beneficiaries × Reach) ÷ Cost Index</div>
+        </div>
+        <span class="card-badge">Impact Ranking</span>
+      </div>
+      <table class="data-table">
+        <thead>
+          <tr><th>Campaign</th><th>Type</th><th>Beneficiaries</th><th>Volunteers</th><th>Cost ₹</th><th>Impact Score</th><th>Rating</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Diwali Food Drive 2024</td><td>Food</td><td>3,200</td><td>180</td><td>₹42,000</td><td>94.2</td><td><span class="status-badge status-high">A+</span></td></tr>
+          <tr><td>Winter Clothing Drive</td><td>Clothing</td><td>2,800</td><td>145</td><td>₹38,000</td><td>89.7</td><td><span class="status-badge status-high">A+</span></td></tr>
+          <tr><td>Menstrual Hygiene Awareness</td><td>Hygiene</td><td>1,900</td><td>92</td><td>₹21,000</td><td>85.3</td><td><span class="status-badge status-high">A</span></td></tr>
+          <tr><td>Back to School 2024</td><td>Education</td><td>1,400</td><td>78</td><td>₹31,500</td><td>72.1</td><td><span class="status-badge status-high">A</span></td></tr>
+          <tr><td>Independence Day Food Camp</td><td>Food</td><td>2,100</td><td>110</td><td>₹52,000</td><td>68.4</td><td><span class="status-badge status-med">B+</span></td></tr>
+          <tr><td>Animal Care Drive</td><td>Other</td><td>600</td><td>45</td><td>₹14,000</td><td>61.2</td><td><span class="status-badge status-med">B</span></td></tr>
+          <tr><td>Holi Distribution Camp</td><td>Food</td><td>1,100</td><td>60</td><td>₹41,000</td><td>52.8</td><td><span class="status-badge status-med">B</span></td></tr>
+          <tr><td>Digital Literacy Workshop</td><td>Education</td><td>380</td><td>28</td><td>₹19,000</td><td>38.4</td><td><span class="status-badge status-low">C+</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       PAGE 7: RECOMMENDATIONS
+  ═══════════════════════════════════════════════ -->
+  <div class="page" id="page-recommendations">
+    <div style="padding:4px 0 20px">
+      <div class="section-title">💡 Data-Driven Recommendations</div>
+      <div class="section-desc">Strategic insights for NayePankh Foundation · Based on analytics above</div>
+    </div>
+
+    <div style="background:linear-gradient(135deg,#0B1E30,#0369A1);border-radius:16px;padding:28px;color:#fff;margin-bottom:24px">
+      <div style="font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;margin-bottom:8px">📊 Recommended Project: NayePankh ImpactTracker</div>
+      <div style="font-size:14px;opacity:0.85;line-height:1.7;max-width:700px">
+        A real-time data analytics system that ingests data from all drives, intern programs, social media, and donations — and produces automated monthly impact reports with predictive models for demand forecasting, donor churn prediction, and campaign ROI optimization.
+      </div>
+      <div style="display:flex;gap:12px;margin-top:16px;flex-wrap:wrap">
+        <span style="background:rgba(255,255,255,0.12);border-radius:20px;padding:5px 14px;font-size:12px;font-weight:600">Python · Pandas · scikit-learn</span>
+        <span style="background:rgba(255,255,255,0.12);border-radius:20px;padding:5px 14px;font-size:12px;font-weight:600">Google Sheets API</span>
+        <span style="background:rgba(255,255,255,0.12);border-radius:20px;padding:5px 14px;font-size:12px;font-weight:600">Chart.js Dashboard</span>
+        <span style="background:rgba(255,255,255,0.12);border-radius:20px;padding:5px 14px;font-size:12px;font-weight:600">Automated PDF Reports</span>
+      </div>
+    </div>
+
+    <div class="rec-grid">
+      <div class="rec-card">
+        <div class="rec-num">1</div>
+        <div class="rec-title">Track Beneficiary Data with Unique IDs</div>
+        <div class="rec-body">Currently aid is distributed without individual tracking. Introducing a simple mobile-form system (Google Forms + Sheets) to record name, location, aid type, and date would let NayePankh measure repeat reach, geographic gaps, and actual impact per rupee spent.</div>
+        <span class="rec-impact">📈 Impact: High · Effort: Low</span>
+      </div>
+      <div class="rec-card">
+        <div class="rec-num">2</div>
+        <div class="rec-title">Donor Churn Prediction Model</div>
+        <div class="rec-body">With 62% of first-time donors not returning, a simple logistic regression model trained on donation frequency, amount, and platform can flag at-risk donors for follow-up campaigns — expected to improve repeat donation rate by 12–18%.</div>
+        <span class="rec-impact">💰 Impact: High · Effort: Medium</span>
+      </div>
+      <div class="rec-card">
+        <div class="rec-num">3</div>
+        <div class="rec-title">Instagram → Donation Conversion Funnel</div>
+        <div class="rec-body">15K Instagram followers but weak donation channel linkage. Adding UTM-tracked bio links, Instagram Story donation stickers, and weekly "impact posts" showing data (e.g. "Your ₹500 fed 10 families") can drive 3–5% conversion from social audience.</div>
+        <span class="rec-impact">📱 Impact: High · Effort: Low</span>
+      </div>
+      <div class="rec-card">
+        <div class="rec-num">4</div>
+        <div class="rec-title">Intern-to-Volunteer Pipeline Analytics</div>
+        <div class="rec-body">Only 6.2% of 30,000+ interns convert to volunteers. Data shows engagement drops after certificate issuance. Building a 30/60/90-day post-internship email drip with local drive invitations and skill-matching recommendations can 2x this conversion.</div>
+        <span class="rec-impact">🙌 Impact: High · Effort: Medium</span>
+      </div>
+      <div class="rec-card">
+        <div class="rec-num">5</div>
+        <div class="rec-title">Seasonal Demand Forecasting</div>
+        <div class="rec-body">Historical data shows 40% demand spikes in Oct–Nov (Diwali) and Dec–Jan (winter). A simple moving average model can forecast material requirements 6 weeks in advance, allowing procurement planning and reducing last-minute cost overruns by ~20%.</div>
+        <span class="rec-impact">🍱 Impact: Medium · Effort: Low</span>
+      </div>
+      <div class="rec-card">
+        <div class="rec-num">6</div>
+        <div class="rec-title">Website Heatmap & A/B Testing</div>
+        <div class="rec-body">The current nayepankh.com donate page has a 38% click-to-payment drop-off. Implementing Hotjar heatmaps + A/B testing two CTA button variants ("Donate ₹500 Now" vs "Feed a Family Today") can improve conversion by 15–25% based on NGO benchmarks.</div>
+        <span class="rec-impact">🌐 Impact: High · Effort: Low</span>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Implementation Roadmap</div>
+          <div class="card-subtitle">12-month data analytics transformation plan</div>
+        </div>
+        <span class="card-badge">Strategic</span>
+      </div>
+      <div style="padding:10px 0">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
+          <div style="background:#EFF6FF;border-radius:10px;padding:16px;border-top:3px solid #0EA5E9">
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#0369A1;margin-bottom:6px">Q1 · Foundation</div>
+            <div style="font-size:12px;color:#1E3A5F;line-height:1.6">✅ Beneficiary tracking forms<br>✅ Google Sheets pipeline<br>✅ Monthly report template<br>✅ UTM donation links</div>
+          </div>
+          <div style="background:#F0FDF4;border-radius:10px;padding:16px;border-top:3px solid #22C55E">
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#15803D;margin-bottom:6px">Q2 · Visualisation</div>
+            <div style="font-size:12px;color:#14532D;line-height:1.6">📊 This dashboard live<br>📊 Campaign ROI tracking<br>📊 Social media analytics<br>📊 Intern completion KPIs</div>
+          </div>
+          <div style="background:#FFF7ED;border-radius:10px;padding:16px;border-top:3px solid #F59E0B">
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#B45309;margin-bottom:6px">Q3 · Prediction</div>
+            <div style="font-size:12px;color:#78350F;line-height:1.6">🤖 Donor churn model<br>🤖 Demand forecasting<br>🤖 Volunteer matching ML<br>🤖 A/B testing website</div>
+          </div>
+          <div style="background:#FDF4FF;border-radius:10px;padding:16px;border-top:3px solid #8B5CF6">
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#6D28D9;margin-bottom:6px">Q4 · Scale</div>
+            <div style="font-size:12px;color:#4C1D95;line-height:1.6">🚀 Automated PDF reports<br>🚀 WhatsApp alerts<br>🚀 Pan-India expansion data<br>🚀 Impact Annual Report 2025</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end main -->
+
+<script>
+// ── ROUTING ──
+const pageTitles = {
+  overview: '📊 Impact Dashboard',
+  fundraising: '💰 Fundraising Analytics',
+  volunteers: '🙌 Volunteer Analytics',
+  interns: '🎓 Internship Analytics',
+  social: '📱 Social Media Analytics',
+  campaigns: '📣 Campaigns Analytics',
+  recommendations: '💡 Data-Driven Recommendations'
+};
+
+function showPage(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  el.classList.add('active');
+  document.getElementById('page-title').textContent = pageTitles[id];
+}
+
+// ── LAST UPDATED ──
+const now = new Date();
+document.getElementById('last-updated').textContent =
+  'Updated: ' + now.toLocaleTimeString('en-IN', {hour:'2-digit',minute:'2-digit'}) + ' IST';
+
+// ── COLOUR PALETTE ──
+const C = {
+  sky: '#0EA5E9', teal: '#14B8A6', amber: '#F59E0B',
+  rose: '#F43F5E', violet: '#8B5CF6', green: '#22C55E',
+  slate: '#64748B', blue: '#3B82F6', orange: '#F97316'
+};
+const alpha = (hex, a) => hex + Math.round(a*255).toString(16).padStart(2,'0');
+const MONTHS = ['Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar'];
+
+// Chart defaults
+Chart.defaults.font.family = 'Inter';
+Chart.defaults.font.size = 11;
+Chart.defaults.color = '#64748B';
+Chart.defaults.plugins.legend.labels.boxWidth = 10;
+Chart.defaults.plugins.legend.labels.padding = 14;
+
+function mkChart(id, cfg) {
+  const ctx = document.getElementById(id);
+  if (!ctx) return;
+  return new Chart(ctx, cfg);
+}
+
+// ── OVERVIEW CHARTS ──
+mkChart('impactTrendChart', {
+  type: 'bar',
+  data: {
+    labels: MONTHS,
+    datasets: [{
+      label: 'People Reached',
+      data: [8200, 7400, 9100, 11200, 14800, 12900, 10400, 18600, 17800, 16200, 13400, 11800],
+      backgroundColor: alpha(C.sky, 0.85),
+      borderRadius: 6, borderSkipped: false
+    }, {
+      label: 'Trend Line',
+      data: [8000, 8400, 9000, 10200, 12500, 12800, 12000, 15000, 16000, 15500, 14000, 13000],
+      type: 'line', borderColor: C.amber, borderWidth: 2,
+      tension: 0.4, pointRadius: 3, fill: false
+    }]
+  },
+  options: { responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: 'bottom' } },
+    scales: { y: { beginAtZero: true, grid: { color: '#F1F5F9' } },
+               x: { grid: { display: false } } } }
+});
+
+mkChart('programPieChart', {
+  type: 'doughnut',
+  data: {
+    labels: ['Food Distribution','Clothing Drives','Hygiene Campaigns','Education','Intern Training','Admin & Ops'],
+    datasets: [{ data: [32, 18, 14, 16, 14, 6],
+      backgroundColor: [C.sky, C.teal, C.rose, C.green, C.violet, C.amber],
+      borderWidth: 2, borderColor: '#fff', hoverOffset: 6 }]
+  },
+  options: { responsive: true, maintainAspectRatio: false, cutout: '62%',
+    plugins: { legend: { position: 'bottom' } } }
+});
+
+mkChart('cityChart', {
+  type: 'bar',
+  data: {
+    labels: ['Kanpur','Ghaziabad','Lucknow','Agra','Meerut','Varanasi'],
+    datasets: [{ label: 'Beneficiaries',
+      data: [62000, 48000, 34000, 24000, 18000, 14000],
+      backgroundColor: [C.sky, C.teal, C.violet, C.amber, C.green, C.rose],
+      borderRadius: 6, borderSkipped: false }]
+  },
+  options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+    plugins: { legend: { display: false } },
+    scales: { x: { grid: { color: '#F1F5F9' } }, y: { grid: { display: false } } } }
+});
+
+mkChart('aidTypeChart', {
+  type: 'polarArea',
+  data: {
+    labels: ['Food','Clothing','Sanitary','Education','Animal Care','Medical'],
+    datasets: [{ data: [38, 22, 16, 14, 6, 4],
+      backgroundColor: [alpha(C.sky,0.7), alpha(C.teal,0.7), alpha(C.rose,0.7),
+                         alpha(C.green,0.7), alpha(C.amber,0.7), alpha(C.violet,0.7)] }]
+  },
+  options: { responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: 'bottom' } } }
+});
+
+mkChart('growthChart', {
+  type: 'line',
+  data: {
+    labels: ['Q1 FY23','Q2 FY23','Q3 FY23','Q4 FY23','Q1 FY24','Q2 FY24','Q3 FY24','Q4 FY24','Q1 FY25','Q2 FY25'],
+    datasets: [{ label: 'Growth %',
+      data: [8, 11, 14, 18, 22, 19, 24, 28, 31, 34],
+      borderColor: C.green, backgroundColor: alpha(C.green, 0.1),
+      borderWidth: 2.5, tension: 0.4, fill: true, pointRadius: 4 }]
+  },
+  options: { responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: { y: { beginAtZero: true, grid: { color: '#F1F5F9' },
+                   ticks: { callback: v => v + '%' } },
+               x: { grid: { display: false }, ticks: { maxRotation: 45 } } } }
+});
+
+// ── FUNDRAISING CHARTS ──
+mkChart('donationTrendChart', {
+  type: 'bar',
+  data: {
+    labels: MONTHS,
+    datasets: [{
+      label: 'Donations ₹K',
+      data: [2.8, 2.4, 3.1, 3.8, 4.2, 3.6, 3.2, 5.8, 5.2, 4.9, 4.1, 3.5],
+      backgroundColor: alpha(C.green, 0.85), borderRadius: 6, borderSkipped: false
+    }, {
+      label: 'Target ₹K',
+      data: [4.2, 4.2, 4.2, 4.2, 4.2, 4.2, 4.2, 4.2, 4.2, 4.2, 4.2, 4.2],
+      type: 'line', borderColor: C.rose, borderWidth: 1.5,
+      borderDash: [5,4], pointRadius: 0, fill: false
+    }]
+  },
+  options: { responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: 'bottom' } },
+    scales: { y: { grid: { color: '#F1F5F9' }, ticks: { callback: v => '₹' + v + 'K' } },
+               x: { grid: { display: false } } } }
+});
+
+mkChart('donationChannelChart', {
+  type: 'doughnut',
+  data: {
+    labels: ['Internshala / Website','UPI / Razorpay','Bank Transfer','Cash / In-Person','Corporate CSR','Events'],
+    datasets: [{ data: [34, 28, 18, 9, 7, 4],
+      backgroundColor: [C.sky, C.teal, C.green, C.amber, C.violet, C.rose],
+      borderWidth: 2, borderColor: '#fff' }]
+  },
+  options: { responsive: true, maintainAspectRatio: false, cutout: '58%',
+    plugins: { legend: { position: 'bottom' } } }
+});
+
+mkChart('donorSegmentChart', {
+  type: 'bar',
+  data: {
+    labels: ['₹100–500','₹501–2K','₹2K–5K','₹5K–10K','₹10K–50K','₹50K+'],
+    datasets: [{ label: 'Number of Donors',
+      data: [820, 1240, 560, 180, 96, 25],
+      backgroundColor: [C.sky, C.teal, C.green, C.amber, C.violet, C.rose],
+      borderRadius: 6, borderSkipped: false }]
+  },
+  options: { responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: { y: { grid: { color: '#F1F5F9' } }, x: { grid: { display: false } } } }
+});
+
+// ── VOLUNTEER CHARTS ──
+mkChart('volunteerGrowthChart', {
+  type: 'line',
+  data: {
+    labels: ['Q1 FY23','Q2 FY23','Q3 FY23','Q4 FY23','Q1 FY24','Q2 FY24','Q3 FY24','Q4 FY24','Q1 FY25','Q2 FY25'],
+    datasets: [{
+      label: 'Active Volunteers',
+      data: [820, 980, 1240, 1580, 1920, 2400, 2800, 3200, 3900, 4800],
+      borderColor: C.teal, backgroundColor: alpha(C.teal, 0.1),
+      borderWidth: 2.5, fill: true, tension: 0.4, pointRadius: 4
+    }]
+  },
+  options: { responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: { y: { grid: { color: '#F1F5F9' } }, x: { grid: { display: false }, ticks: { maxRotation: 45 } } } }
+});
+
+mkChart('volunteerAgeChart', {
+  type: 'bar',
+  data: {
+    labels: ['15–18','19–21','22–24','25–28','29–34','35+'],
+    datasets: [{ label: '% of Volunteers',
+      data: [8, 42, 31, 11, 5, 3],
+      backgroundColor: [C.amber, C.sky, C.teal, C.green, C.violet, C.rose],
+      borderRadius: 6, borderSkipped: false }]
+  },
+  options: { responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: { y: { grid: { color: '#F1F5F9' }, ticks: { callback: v => v + '%' } },
+               x: { grid: { display: false } } } }
+});
+
+// ── INTERN CHARTS ──
+mkChart('internBatchChart', {
+  type: 'bar',
+  data: {
+    labels: MONTHS,
+    datasets: [{
+      label: 'Applications',
+      data: [1800, 1600, 2100, 2800, 3400, 3100, 2600, 4200, 3800, 3500, 2900, 2400],
+      backgroundColor: alpha(C.violet, 0.85), borderRadius: 6, borderSkipped: false
+    }, {
+      label: 'Completions',
+      data: [1700, 1520, 1990, 2640, 3200, 2940, 2460, 3980, 3600, 3310, 2740, 2260],
+      backgroundColor: alpha(C.sky, 0.85), borderRadius: 6, borderSkipped: false
+    }]
+  },
+  options: { responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: 'bottom' } },
+    scales: { y: { grid: { color: '#F1F5F9' } }, x: { grid: { display: false } } } }
+});
+
+mkChart('internDomainChart', {
+  type: 'doughnut',
+  data: {
+    labels: ['Social Work & HR','Data Analytics','Content & Marketing','AI / Tech','Design & Creative','Education','Finance'],
+    datasets: [{ data: [28, 18, 16, 14, 10, 8, 6],
+      backgroundColor: [C.sky, C.teal, C.amber, C.violet, C.rose, C.green, C.orange],
+      borderWidth: 2, borderColor: '#fff' }]
+  },
+  options: { responsive: true, maintainAspectRatio: false, cutout: '58%',
+    plugins: { legend: { position: 'bottom' } } }
+});
+
+// ── SOCIAL CHARTS ──
+mkChart('igGrowthChart', {
+  type: 'line',
+  data: {
+    labels: ['Jan 24','Mar 24','May 24','Jul 24','Sep 24','Nov 24','Jan 25','Mar 25','May 25'],
+    datasets: [{
+      label: 'Instagram Followers',
+      data: [7200, 8400, 9600, 10800, 11900, 12800, 13400, 14200, 15000],
+      borderColor: '#E1306C', backgroundColor: 'rgba(225,48,108,0.1)',
+      borderWidth: 2.5, fill: true, tension: 0.4, pointRadius: 4
+    }]
+  },
+  options: { responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: { y: { grid: { color: '#F1F5F9' } }, x: { grid: { display: false }, ticks: { maxRotation: 45 } } } }
+});
+
+mkChart('contentTypeChart', {
+  type: 'bar',
+  data: {
+    labels: ['Reels','Carousels','Impact Stories','Events/Drives','Quotes','Awareness'],
+    datasets: [{ label: 'Avg Reach',
+      data: [4800, 3200, 2900, 2600, 1800, 2100],
+      backgroundColor: ['#E1306C', C.violet, C.sky, C.teal, C.amber, C.green],
+      borderRadius: 6, borderSkipped: false }]
+  },
+  options: { responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: { y: { grid: { color: '#F1F5F9' } }, x: { grid: { display: false } } } }
+});
+
+mkChart('bestDayChart', {
+  type: 'bar',
+  data: {
+    labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+    datasets: [{ label: 'Engagement Rate %',
+      data: [3.2, 3.8, 4.1, 4.8, 5.2, 6.1, 5.4],
+      backgroundColor: ['#94A3B8','#94A3B8','#94A3B8','#94A3B8',C.amber, C.sky, C.teal],
+      borderRadius: 6, borderSkipped: false }]
+  },
+  options: { responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: { y: { grid: { color: '#F1F5F9' }, ticks: { callback: v => v + '%' } },
+               x: { grid: { display: false } } } }
+});
+
+mkChart('platformSplitChart', {
+  type: 'doughnut',
+  data: {
+    labels: ['Instagram (15K)','LinkedIn (1.5K)','Facebook (1.4K)','Twitter','WhatsApp Groups'],
+    datasets: [{ data: [78, 8, 7, 3, 4],
+      backgroundColor: ['#E1306C', '#0077B5', '#1877F2', '#1DA1F2', '#25D366'],
+      borderWidth: 2, borderColor: '#fff' }]
+  },
+  options: { responsive: true, maintainAspectRatio: false, cutout: '58%',
+    plugins: { legend: { position: 'bottom' } } }
+});
+
+// ── CAMPAIGN CHARTS ──
+mkChart('campaignMonthChart', {
+  type: 'bar',
+  data: {
+    labels: MONTHS,
+    datasets: [{
+      label: 'Food Drives', data: [8,7,10,14,18,16,12,22,20,19,15,12],
+      backgroundColor: alpha(C.sky, 0.85), borderRadius: 4, borderSkipped: false
+    }, {
+      label: 'Hygiene', data: [4,3,5,6,8,7,6,10,9,8,6,5],
+      backgroundColor: alpha(C.rose, 0.85), borderRadius: 4, borderSkipped: false
+    }, {
+      label: 'Education', data: [6,5,7,9,11,10,8,14,12,11,9,8],
+      backgroundColor: alpha(C.green, 0.85), borderRadius: 4, borderSkipped: false
+    }]
+  },
+  options: { responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: 'bottom' } },
+    scales: { x: { stacked: true, grid: { display: false } },
+               y: { stacked: true, grid: { color: '#F1F5F9' } } } }
+});
+
+mkChart('campaignROIChart', {
+  type: 'bar',
+  data: {
+    labels: ['Food Drive','Clothing','Hygiene Kit','Education','Animal Care','Medical'],
+    datasets: [{ label: '₹ per Beneficiary',
+      data: [13, 18, 11, 28, 24, 42],
+      backgroundColor: [C.sky, C.teal, C.rose, C.amber, C.green, C.violet],
+      borderRadius: 6, borderSkipped: false }]
+  },
+  options: { responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      y: { grid: { color: '#F1F5F9' }, ticks: { callback: v => '₹' + v } },
+      x: { grid: { display: false } }
+    }
+  }
+});
+</script>
+</body>
+</html>
