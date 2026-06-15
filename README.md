@@ -3,9 +3,9 @@
 > **Data Analytics Internship Project** · NayePankh Foundation · 2025  
 > Built by **DJ** · B.Tech CSE (2024–25)
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-0EA5E9?style=for-the-badge&logo=github)](https://yourusername.github.io/nayepankh-dashboard/)
-[![HTML](https://img.shields.io/badge/Built%20With-HTML%2FJS%2FChart.js-F59E0B?style=for-the-badge)](https://chartjs.org)
-[![NGO](https://img.shields.io/badge/NGO-UP%20Govt.%20Registered-22C55E?style=for-the-badge)](https://nayepankh.com)
+[![Live Demo](https://github.com/SriKrishna021/naye.dashboard./blob/607e294720f6ccd170dfb87e093c3ffd7bab8af2/Screenshot%202026-06-15%20164515.png)](https://github.com/SriKrishna021/naye.dashboard./blob/607e294720f6ccd170dfb87e093c3ffd7bab8af2/Screenshot%202026-06-15%20164625.png)
+[![HTML](https://github.com/SriKrishna021/naye.dashboard./blob/607e294720f6ccd170dfb87e093c3ffd7bab8af2/Screenshot%202026-06-15%20164716.png)
+[![NGO](https://github.com/SriKrishna021/naye.dashboard./blob/607e294720f6ccd170dfb87e093c3ffd7bab8af2/Screenshot%202026-06-15%20164747.png)](http://github.com/SriKrishna021/naye.dashboard./blob/607e294720f6ccd170dfb87e093c3ffd7bab8af2/Screenshot%202026-06-15%20164822.png)
 
 ---
 
